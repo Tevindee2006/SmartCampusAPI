@@ -36,4 +36,25 @@ This approach provides several advantages to client developers:
 In contrast, with static documentation, developers must manually follow predefined endpoints, which may become outdated and lead to errors. HATEOAS makes APIs more dynamic, intuitive, and robust by embedding navigation directly into responses.
 
 
-Q3.
+## Part 2
+### Q1.
+#### Returning IDs vs Full Objects
+
+When returning a list of rooms in a REST API, there are two approaches: returning only room IDs or returning full room objects. Each approach has different implications in terms of network bandwidth and client-side processing.
+
+Returning only IDs reduces the amount of data transferred over the network, which improves performance and reduces bandwidth usage. For example, a response like:
+
+[1, 2, 3]
+
+is much smaller compared to sending full objects. However, this approach requires the client to make additional requests to retrieve full details for each room, increasing the number of HTTP calls.
+
+On the other hand, returning full room objects provides all necessary information in a single response. For example:
+
+[
+  { "id": 1, "name": "Room A", "capacity": 50 },
+  { "id": 2, "name": "Room B", "capacity": 30 }
+]
+
+This reduces the need for additional requests and simplifies client-side processing. However, it increases the size of the response and may consume more bandwidth.
+
+Therefore, there is a trade-off between efficiency and convenience. Returning IDs is more efficient in terms of bandwidth, while returning full objects is more convenient for the client and reduces the number of requests.
