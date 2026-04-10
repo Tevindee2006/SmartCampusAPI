@@ -1,8 +1,8 @@
 # SmartCampusAPI
 Client Server Architecture CW 
 
-Part 1 
-Q1.
+## Part 1 
+## Q1.
 ## JAX-RS Resource Lifecycle
 
 By default, JAX-RS resource classes follow a **per-request lifecycle**. This means a new instance of the resource class is created for each incoming HTTP request, rather than being treated as a singleton.
@@ -19,7 +19,7 @@ To ensure thread safety:
 Although per-request instantiation avoids issues with instance variables, developers must still carefully manage shared resources to prevent data inconsistency and concurrency issues.
 
 
-Q2.
+## Q2.
 ## REST HATEOAS and Hypermedia
 
 Hypermedia (also referred to as HATEOAS) is regarded as an important aspect of advanced RESTful design. It implies that API responses contain links which guide clients on what actions they can take next.
