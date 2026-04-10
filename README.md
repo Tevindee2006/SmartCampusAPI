@@ -57,4 +57,37 @@ On the other hand, returning full room objects provides all necessary informatio
 
 This reduces the need for additional requests and simplifies client-side processing. However, it increases the size of the response and may consume more bandwidth.
 
+### Q2.
+###
+
+
+## Part 3
+### Q1.
+####
+
+### Q2.
+###
+
+
+## Part 4
+### Q1.
+####
+
+### Q2.
+###
+
+
+## Part 5
+### Q1.
+####
+
+### Q2.
+###
+
+### Q3.
+###
+
+
+
+
 Therefore, there is a trade-off between efficiency and convenience. Returning IDs is more efficient in terms of bandwidth, while returning full objects is more convenient for the client and reduces the number of requests.
