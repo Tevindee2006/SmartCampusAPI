@@ -31,12 +31,12 @@ This approach provides several advantages to client developers:
 - Self-discoverability: Clients do not have to depend heavily on external documentation since the API provides links dynamically in responses.
 - Reduced coupling: Clients do not rely on fixed endpoint structures. If the API changes, clients can still operate by following the provided links.
 - Enhanced flexibility: The server controls the application flow by directing clients to the available actions.
-- Simpler maintenance: Changes to endpoints or structure require fewer updates on the client side.
+- Easier maintenance: Changes to endpoints or structure require fewer updates on the client side.
 
 In contrast, with static documentation, developers must manually follow predefined endpoints, which may become outdated and lead to errors. HATEOAS makes APIs more dynamic, intuitive, and robust by embedding navigation directly into responses.
 
 
-## Part 2
+## Part 2 
 ### Q1.
 #### Returning IDs vs Full Objects
 
@@ -57,37 +57,194 @@ On the other hand, returning full room objects provides all necessary informatio
 
 This reduces the need for additional requests and simplifies client-side processing. However, it increases the size of the response and may consume more bandwidth.
 
+Therefore, there is a trade-off between efficiency and convenience. Returning IDs is more efficient in terms of bandwidth, while returning full objects is more convenient for the client and reduces the number of requests.
+
 ### Q2.
-###
+#### Idempotency of DELETE Operation with Business Logic
+
+Yes, the DELETE operation in this implementation is idempotent.
+
+Idempotency means that performing the same operation multiple times results in the same final state as performing it once. In the context of DELETE, this means that repeated deletion requests should not further change the system after the first successful operation.
+
+In this implementation, the DELETE /rooms/{id} operation includes a business rule: a room cannot be deleted if it still has active sensors assigned to it.
+
+If a client sends a DELETE request for a room that has sensors:
+- The request is blocked
+- A custom error response is returned (e.g., 409 Conflict)
+- The room remains unchanged
+
+If the same DELETE request is repeated:
+- The same error response is returned
+- The system state remains unchanged
+
+This is still idempotent because no changes occur regardless of how many times the request is repeated.
+
+If a room has no sensors:
+- The first DELETE request successfully removes the room (e.g., returns 200 OK or 204 No Content)
+- Any subsequent DELETE requests for the same room will return 404 Not Found, since the room no longer exists
+
+Again, the system state remains the same (the room is already deleted), demonstrating idempotency.
+
+Therefore, even with the business constraint in place, the DELETE operation remains idempotent because repeated requests do not introduce additional side effects or change the final state of the system.
 
 
 ## Part 3
 ### Q1.
-####
+#### @Consumes and Media Type Handling
+
+The @Consumes(MediaType.APPLICATION_JSON) annotation defines the media type that the server is able to consume. It specifies that the POST method only accepts requests with the Content-Type: application/json header.
+
+If a client sends data in a different format (e.g., text/plain or application/xml), JAX-RS will handle the mismatch as follows:
+
+- Rejection of the Request: JAX-RS will automatically reject the request and return an HTTP 415 Unsupported Media Type response. This indicates that the server refuses to accept the request because the payload format is not supported.
+- No Processing: The method will not be invoked, and the request body will not be processed. This prevents errors caused by attempting to parse invalid data.
+- Clear Client Feedback: The client receives a clear error response, allowing them to correct the Content-Type header and resend the request in the correct format.
+
+This behavior is part of content negotiation in RESTful services, where the server ensures that only supported media types are processed.
+
 
 ### Q2.
-###
+#### Query Parameters vs Path Parameters for Filtering
+
+In this implementation, filtering is achieved using @QueryParam, for example:
+GET /api/v1/sensors?type=CO2
+
+An alternative design could use a path parameter, such as:
+GET /api/v1/sensors/type/CO2
+
+However, the query parameter approach is generally considered superior for filtering and searching collections for several reasons:
+
+- Semantic correctness: Query parameters are intended for filtering, sorting, and searching within a collection, whereas path parameters are used to identify specific resources. Using query parameters better aligns with RESTful design principles.
+
+- Flexibility: Query parameters allow multiple filters to be combined easily, such as:
+  GET /api/v1/sensors?type=CO2&status=active
+  This is more difficult and less clean to represent using path parameters.
+
+- Optionality: Query parameters are naturally optional. If no filter is provided, the API can simply return all sensors:
+  GET /api/v1/sensors
+  This makes the API more intuitive and easier to use.
+
+- Scalability: As the number of filtering options increases, query parameters scale better without making the URL structure overly complex.
+
+In contrast, embedding filters in the path can make the API rigid and harder to extend. Therefore, using query parameters provides a more flexible, scalable, and semantically correct approach for filtering and searching collections.
 
 
 ## Part 4
 ### Q1.
-####
+#### Sub-Resource Locator Pattern
+
+The Sub-Resource Locator pattern is used in JAX-RS to delegate handling of nested resources to separate classes. Instead of defining all endpoints within a single resource class, a method returns another resource class that is responsible for handling a specific sub-path.
+
+For example, a SensorResource can delegate requests for sensor readings to a SensorReadingResource using a sub-resource locator such as:
+GET /sensors/{id}/readings
+
+This approach provides several architectural benefits:
+
+- Improved separation of concerns: Each resource class is responsible for a specific part of the API. For example, SensorResource handles sensors, while SensorReadingResource handles readings. This makes the code more modular and easier to understand.
+
+- Better maintainability: Splitting logic across multiple classes makes it easier to update, debug, and extend the API without affecting unrelated parts of the system.
+
+- Reduced complexity: Avoiding a single large controller class prevents code from becoming overly complex and difficult to manage. Large monolithic classes are harder to read and maintain.
+
+- Scalability: As the API grows, new sub-resources can be added without significantly increasing the complexity of existing classes.
+
+- Reusability: Sub-resource classes can be reused or extended independently, improving code organization.
+
+In contrast, defining all nested paths (such as sensors/{id}/readings/{rid}) in one large controller leads to tightly coupled and hard-to-maintain code. The Sub-Resource Locator pattern promotes a cleaner, modular, and scalable architecture for building large RESTful APIs.
+
 
 ### Q2.
-###
+#### Historical Data Management and Data Consistency
+
+The SensorReadingResource is responsible for managing historical readings for each sensor. It provides two main operations:
+
+- GET /sensors/{id}/readings: Retrieves the full history of readings for a specific sensor.
+- POST /sensors/{id}/readings: Adds a new reading to the sensor’s history.
+
+When a new reading is added using the POST operation, it is important to maintain consistency between the historical data and the current state of the sensor.
+
+Therefore, a successful POST request not only stores the new reading in the sensor’s history but also updates the `currentValue` field of the corresponding parent Sensor object.
+
+This design ensures:
+
+- Data consistency: The latest reading is always reflected in the sensor’s currentValue field.
+- Synchronization between resources: The historical data (readings) and the main sensor resource remain aligned.
+- Improved efficiency: Clients can retrieve the current value directly from the sensor without needing to process the entire reading history.
+
+For example, if a new temperature reading of 25°C is added, the system appends it to the readings list and updates the sensor’s currentValue to 25.
+
+This approach ensures that the API maintains an accurate and up-to-date representation of sensor data across all endpoints.
 
 
 ## Part 5
 ### Q1.
-####
+#### HTTP 422 vs 404 for Dependency Validation
+
+HTTP 422 Unprocessable Entity is often considered more semantically accurate than 404 Not Found when the issue is a missing reference inside a valid JSON payload.
+
+A 404 Not Found response is typically used when the requested resource itself cannot be found. For example, if a client requests:
+GET /rooms/10
+and room 10 does not exist, then a 404 response is appropriate because the resource being requested is missing.
+
+However, in the case of POST /sensors, the client is not requesting a resource but attempting to create a new one. The request itself is valid and well-formed JSON, but it contains a logical error — the provided roomId does not correspond to an existing room.
+
+In this situation:
+- The request structure is correct
+- The endpoint exists
+- The payload is syntactically valid
+- But the data is semantically incorrect
+
+Therefore, HTTP 422 Unprocessable Entity is more appropriate because it indicates that the server understands the request but cannot process it due to invalid data.
+
+Using 422 provides clearer feedback to the client, distinguishing between:
+- A missing resource (404)
+- Invalid or inconsistent data within a valid request (422)
+
+This improves API usability and helps clients handle errors more accurately.
 
 ### Q2.
-###
+#### Risks of Exposing Internal Stack Traces
+
+From a cybersecurity standpoint, exposing internal Java stack traces to external API consumers is a significant security risk.
+
+A stack trace contains detailed information about the internal structure and execution of the application. If this information is exposed, an attacker can gather sensitive details about the system, which can be used to exploit vulnerabilities.
+
+Some of the key risks include:
+
+- Information disclosure: Stack traces may reveal internal class names, package structures, and file paths. This gives attackers insight into how the application is designed.
+
+- Technology exposure: Attackers can identify the frameworks and technologies being used (e.g., JAX-RS, specific libraries), which helps them target known vulnerabilities.
+
+- Code logic leakage: Stack traces may expose method names and execution flow, allowing attackers to understand how the application processes requests.
+
+- Server details: Information about the server environment, such as operating system paths or configurations, may be revealed.
+
+- Attack planning: With knowledge of the system structure, attackers can craft more precise attacks, such as injection attacks or targeting specific endpoints.
+
+To prevent these risks, a global ExceptionMapper<Throwable> should be implemented to catch all unexpected errors and return a generic HTTP 500 Internal Server Error response without exposing internal details. This ensures that sensitive information is not leaked while still informing the client that an error has occurred.
 
 ### Q3.
-###
+#### Use of Filters for Logging (Cross-Cutting Concerns)
+
+Using JAX-RS filters for cross-cutting concerns such as logging is advantageous compared to manually inserting Logger statements inside every resource method.
+
+Filters allow logging logic to be centralized in one place, rather than being duplicated across multiple resource classes. This improves code organization and reduces repetition.
+
+The key advantages include:
+
+- Separation of concerns: Logging is handled independently from business logic. Resource classes remain focused on handling requests and responses, while filters manage logging.
+
+- Reduced code duplication: Without filters, Logger statements would need to be added to every method, leading to repetitive and cluttered code.
+
+- Consistency: Filters ensure that all incoming requests and outgoing responses are logged in a uniform way, regardless of which resource handles them.
+
+- Maintainability: Changes to logging behavior can be made in a single filter class instead of updating multiple resource methods.
+
+- Scalability: As the API grows, filters automatically apply to new endpoints without requiring additional logging code.
+
+By using ContainerRequestFilter and ContainerResponseFilter, logging is applied globally to all requests and responses. This results in cleaner, more maintainable, and more scalable code compared to embedding logging logic within each resource method.
 
 
 
 
-Therefore, there is a trade-off between efficiency and convenience. Returning IDs is more efficient in terms of bandwidth, while returning full objects is more convenient for the client and reduces the number of requests.
+
