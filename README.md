@@ -35,6 +35,19 @@ This approach provides several advantages to client developers:
 
 In contrast, with static documentation, developers must manually follow predefined endpoints, which may become outdated and lead to errors. HATEOAS makes APIs more dynamic, intuitive, and robust by embedding navigation directly into responses.
 
+For example, a response for a room resource may include:
+
+{
+  "id": "LIB-301",
+  "name": "Library Quiet Study",
+  "links": {
+    "self": "/api/v1/rooms/LIB-301",
+    "sensors": "/api/v1/rooms/LIB-301/sensors"
+  }
+}
+
+This allows clients to dynamically navigate the API without hardcoding endpoint paths.
+
 
 ## Part 2 
 ### Q1.
