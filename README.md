@@ -72,6 +72,8 @@ This reduces the need for additional requests and simplifies client-side process
 
 Therefore, there is a trade-off between efficiency and convenience. Returning IDs is more efficient in terms of bandwidth, while returning full objects is more convenient for the client and reduces the number of requests.
 
+In real-world APIs, pagination is often used to balance performance and usability by limiting the number of results returned in a single response.
+
 ### Q2.
 #### Idempotency of DELETE Operation with Business Logic
 
@@ -140,6 +142,8 @@ However, the query parameter approach is generally considered superior for filte
 - Scalability: As the number of filtering options increases, query parameters scale better without making the URL structure overly complex.
 
 In contrast, embedding filters in the path can make the API rigid and harder to extend. Therefore, using query parameters provides a more flexible, scalable, and semantically correct approach for filtering and searching collections.
+
+Additionally, query parameters are more suitable for caching and allow different filtered responses to be handled efficiently by caching mechanisms.
 
 
 ## Part 4
@@ -232,7 +236,7 @@ Some of the key risks include:
 
 - Server details: Information about the server environment, such as operating system paths or configurations, may be revealed.
 
-- Attack planning: With knowledge of the system structure, attackers can craft more precise attacks, such as injection attacks or targeting specific endpoints.
+- Attack planning: With knowledge of the system structure, attackers can craft more precise attacks, such as injection attacks or targeting specific endpoints. For example, a stack trace may reveal exact class names such as SensorResource or internal file paths, which can help attackers identify vulnerable endpoints or exploit specific parts of the application.
 
 To prevent these risks, a global ExceptionMapper<Throwable> should be implemented to catch all unexpected errors and return a generic HTTP 500 Internal Server Error response without exposing internal details. This ensures that sensitive information is not leaked while still informing the client that an error has occurred.
 
@@ -256,6 +260,8 @@ The key advantages include:
 - Scalability: As the API grows, filters automatically apply to new endpoints without requiring additional logging code.
 
 By using ContainerRequestFilter and ContainerResponseFilter, logging is applied globally to all requests and responses. This results in cleaner, more maintainable, and more scalable code compared to embedding logging logic within each resource method.
+
+This approach follows the principle of separation of concerns, ensuring that business logic and cross-cutting concerns such as logging remain independent.
 
 
 
