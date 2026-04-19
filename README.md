@@ -1,6 +1,70 @@
 # SmartCampusAPI
 Client Server Architecture CW 
 
+## API Design Overview
+The API follows REST principles and is structured into:
+- Rooms (/rooms)
+- Sensors (/sensors)
+- Sensor Readings (/sensors/{id}/readings)
+
+It uses JAX-RS with Jersey and follows a layered design:
+- Resource layer (endpoints)
+- Model layer (data objects)
+- Data layer (in-memory storage)
+
+
+## How to Build and Run
+
+1. Open the project in Apache NetBeans
+2. Ensure JDK 17+ is installed
+3. Right-click the project → Clean and Build
+4. Right-click → Run
+5. The server will start on:
+   http://localhost:8080/SmartCampusAPI/api/v1
+6. Use Postman or browser to test endpoints
+
+## Curl Commands
+
+ 1. Create Room
+curl -X POST http://localhost:8080/SmartCampusAPI/api/v1/rooms \
+-H "Content-Type: application/json" \
+-d '{"id":"ROOM-1","name":"Room A","capacity":30}'
+
+ 2. Get All Rooms
+curl http://localhost:8080/SmartCampusAPI/api/v1/rooms
+
+ 3. Get Room by ID
+curl http://localhost:8080/SmartCampusAPI/api/v1/rooms/ROOM-1
+
+ 4. Delete Room (success)
+curl -X DELETE http://localhost:8080/SmartCampusAPI/api/v1/rooms/ROOM-2
+
+ 5. Delete Room (ERROR - has sensors → 409)
+curl -X DELETE http://localhost:8080/SmartCampusAPI/api/v1/rooms/ROOM-1
+
+ 6. Create Sensor (VALID)
+curl -X POST http://localhost:8080/SmartCampusAPI/api/v1/sensors \
+-H "Content-Type: application/json" \
+-d '{"id":"TEMP-1","type":"Temperature","status":"ACTIVE","currentValue":25,"roomId":"ROOM-1"}'
+
+ 7. Create Sensor (ERROR - invalid room → 422)
+curl -X POST http://localhost:8080/SmartCampusAPI/api/v1/sensors \
+-H "Content-Type: application/json" \
+-d '{"id":"TEMP-ERR","type":"Temperature","status":"ACTIVE","currentValue":22,"roomId":"INVALID"}'
+
+ 8. Get All Sensors
+curl http://localhost:8080/SmartCampusAPI/api/v1/sensors
+
+ 9. Filter Sensors by Type
+curl "http://localhost:8080/SmartCampusAPI/api/v1/sensors?type=Temperature"
+
+ 10. Add Sensor Reading (VALID)
+curl -X POST http://localhost:8080/SmartCampusAPI/api/v1/sensors/TEMP-1/readings \
+-H "Content-Type: application/json" \
+-d '{"id":"R1","timestamp":1713550000000,"value":27}'
+
+
+## Conceptual Answers
 ## Part 1 
 ### Q1.
 #### JAX-RS Resource Lifecycle
