@@ -12,6 +12,13 @@ It uses JAX-RS with Jersey and follows a layered design:
 - Model layer (data objects)
 - Data layer (in-memory storage)
 
+#### Features   
+- Room management (CRUD)
+- Sensor management with validation
+- Sensor readings (sub-resource)
+- Error handling (409, 422, 403, 500)
+- Logging using filters
+
 
 ## How to Build and Run
 
@@ -62,6 +69,12 @@ curl "http://localhost:8080/SmartCampusAPI/api/v1/sensors?type=Temperature"
 curl -X POST http://localhost:8080/SmartCampusAPI/api/v1/sensors/TEMP-1/readings \
 -H "Content-Type: application/json" \
 -d '{"id":"R1","timestamp":1713550000000,"value":27}'
+
+ 11. Get Sensor Readings
+curl http://localhost:8080/SmartCampusAPI/api/v1/sensors/TEMP-1/readings
+
+ 12. Discovery endpoint
+curl http://localhost:8080/SmartCampusAPI/api/v1
 
 
 ## Conceptual Answers
