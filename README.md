@@ -318,7 +318,7 @@ Some of the key risks include:
 To prevent these risks, a global ExceptionMapper<Throwable> should be implemented to catch all unexpected errors and return a generic HTTP 500 Internal Server Error response without exposing internal details. This ensures that sensitive information is not leaked while still informing the client that an error has occurred.
 
 ### Q3.
-#### Use of Filters for Logging (Cross-Cutting Concerns)
+#### Use of Filters for Logging 
 
 Using JAX-RS filters for cross-cutting concerns such as logging is advantageous compared to manually inserting Logger statements inside every resource method.
 
